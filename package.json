@@ -1,20 +1,21 @@
 {
-  "name": "rick-morty-api",
+  "name": "rick-morty-api-challenge",
   "version": "1.0.0",
-  "description": "API de Rick and Morty con búsqueda y caching.",
-  "main": "dist/server.js",
+  "description": "Rick and Morty API Challenge with GraphQL, Sequelize, and Redis caching",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "start": "node dist/main.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    
+    "format": "prettier --write \"src/**/*.ts\"",
     "db:migrate": "npx sequelize-cli db:migrate",
-    "db:seed": "npx sequelize-cli db:seed:all"
+    "db:seed": "npx sequelize-cli db:seed:all",
+    "prepare": "husky install"
   },
   "keywords": [
     "express",
@@ -26,28 +27,45 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
     "graphql": "^16.8.1",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
+    "pino": "^8.19.0",
+    "pino-http": "^9.0.0",
+    "pino-pretty": "^10.3.0",
     "redis": "^4.6.13",
     "sequelize": "^6.37.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.24",
     "@types/sequelize": "^4.28.20",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
+    "commitlint": "^20.1.0",
     "eslint": "^8.57.0",
-    "jest": "^29.7.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.11",
+    "jest": "^29.5.0",
+    "lint-staged": "^15.2.2",
     "nodemon": "^3.1.0",
+    "prettier": "^3.2.5",
     "sequelize-cli": "^6.6.2",
-    "ts-jest": "^29.1.2",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

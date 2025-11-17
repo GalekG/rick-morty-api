@@ -1,6 +1,27 @@
-node_modules/
-.DS_Store
+# Dependencies
+/node_modules
+/dist
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
 .env
 .env.local
-.env.*.local
-dist/
+
+# Builds
+.parcel-cache
+/build
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Coverage reports
+coverage/
+.lcov-report/
+
