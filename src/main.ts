@@ -1,20 +1,29 @@
 import 'dotenv/config';
-import express, { Response } from 'express';
+import express from 'express';
 import pino from 'pino';
 import cors from 'cors';
 import {
   createPinoHttpMiddleware,
   customLoggingMiddleware,
-} from './shared/infrastructure/middlewares/logger.middleware';
+} from './infrastructure/middlewares/logger.middleware';
 import {
   createErrorHandlerMiddleware,
   notFoundMiddleware,
-} from './shared/infrastructure/middlewares/requestError.middleware';
+} from './infrastructure/middlewares/requestError.middleware';
+import { RedisCacheService } from './infrastructure/cache/client.redis';
+import { initializeRoutes } from './infrastructure/routes';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './infrastructure/docs/swagger.config';
+import cron from 'node-cron';
+import { syncCharacters } from './jobs/syncCharacters.cron';
+import { initializeDB } from './infrastructure/database/db';
+import { syncAndSeedDB } from './infrastructure/database/seeders/tsSeed';
 
-const isProduction = process.env.APP_ENV === 'production';
+const app = express();
 
+/* LOGGER */
 const logger = pino({
-  level: isProduction ? 'info' : 'debug',
+  level: process.env.APP_ENV === 'production' ? 'info' : 'debug',
   transport: {
     target: 'pino-pretty',
     options: {
@@ -27,12 +36,15 @@ const logger = pino({
 
 logger.info('Starting Rick and Morty API...');
 
-const PORT = process.env.APP_PORT || 3000;
-
-const app = express();
-
+/* Logger middleware */
 app.use(createPinoHttpMiddleware(logger));
 app.use(customLoggingMiddleware);
+/* Logger middleware */
+/* LOGGER */
+
+const PORT = process.env.APP_PORT || 3000;
+
+/* CORS CONFIGURATION */
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
@@ -42,30 +54,54 @@ app.use(
     optionsSuccessStatus: 204,
   }),
 );
+/* CORS CONFIGURATION */
 
 app.use(express.json());
 
-app.get('/', (_, res: Response) => {
-  res.status(200).json({ message: 'Welcome to the Rick and Morty API' });
-});
+initializeRoutes(app);
 
-app.get('/health', (_, res: Response) => {
-  res.status(200).send();
-});
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: true }));
 
-app.get('/error', () => {
-  throw new Error('Test error');
+/* CRON JOB */
+cron.schedule('0 */12 * * *', () => {
+  syncCharacters({ log: logger } as any);
+  logger.info('Scheduled syncCharacters job every 12 hours');
 });
+/* CRON JOB */
 
+/* ERROR HANDLING */
 app.use(notFoundMiddleware);
 app.use(createErrorHandlerMiddleware);
+/* ERROR HANDLING */
 
 async function startServer() {
-  app.listen(PORT, () => {
-    logger.info(
-      `🚀 Server started and running on port ${PORT} in ${process.env.APP_ENV} environment`,
-    );
-  });
+  const cacheService = new RedisCacheService();
+
+  try {
+    try {
+      await cacheService.initializeCacheService(logger);
+    } catch (e) {
+      logger.warn({ msg: 'Failed to initialize cache service', error: e });
+    }
+
+    try {
+      await initializeDB(logger);
+
+      await syncAndSeedDB(logger);
+    } catch (e) {
+      logger.error({ msg: 'Failed to initialize database, shutting down.', error: e });
+      process.exit(1);
+    }
+
+    app.listen(PORT, () => {
+      logger.info(
+        `🚀 Server started and running on port ${PORT} in ${process.env.APP_ENV} environment`,
+      );
+    });
+  } catch (e) {
+    logger.error({ msg: 'Failed to start server', error: e });
+    process.exit(1);
+  }
 }
 
 startServer();
