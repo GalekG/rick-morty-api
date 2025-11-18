@@ -116,7 +116,7 @@ This will start the server using **nodemon**, with automatic reload on file chan
 
 This diagram visualizes the structure of the two core entities: **Characters** and **Locations**.
 
-![Rick and Morty Entity Relationship Diagram](Rick And Morty ERD.png)
+![Rick and Morty Entity Relationship Diagram](Rick%20And%20Morty%20ERD.png)
 
 ### 🔗 Key Relationships
 
