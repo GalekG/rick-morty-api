@@ -6,15 +6,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "${APP_PORT}:${APP_PORT}"
-    
     networks:
       - rm_network
     env_file:
       - ./.env
+    environment:
+      SWAGGER_SOURCE: 'dist'
     depends_on:
-      - db
-      - redis
-    command: npm run start
+      db:
+        condition: service_healthy 
+      redis:
+        condition: service_started
 
   db:
     container_name: rm-postgres
@@ -30,6 +32,12 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     networks:
       - rm_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     container_name: rm-redis

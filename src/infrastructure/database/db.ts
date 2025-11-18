@@ -36,6 +36,10 @@ export const initializeDB = async (logger: Logger): Promise<void> => {
   }
 
   try {
+    logger.info(
+      `Initializing Sequelize connection on ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`,
+    );
+
     sequelize = new Sequelize(dbConfig);
 
     await sequelize.authenticate();

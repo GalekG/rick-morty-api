@@ -1,5 +1,13 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-var-requires */
+require('dotenv').config();
 const swaggerJsdoc = require('swagger-jsdoc');
+
+const baseDir = process.env.SWAGGER_SOURCE || 'src';
+
+const apisPath =
+  baseDir === 'dist'
+    ? `./dist/infrastructure/routes/*.route.js`
+    : `./src/infrastructure/routes/*.route.{ts,js}`;
 
 const swaggerOptions = {
   definition: {
@@ -17,7 +25,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./src/infrastructure/routes/*.route.{ts,js}'],
+  apis: [apisPath],
 };
 
 export const swaggerSpec = swaggerJsdoc(swaggerOptions);

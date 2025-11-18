@@ -16,11 +16,11 @@
     "prepare": "husky",
 
     "db:migration:generate": "npx sequelize-cli migration:generate --name",
-    "db:migrate": "npx sequelize-cli db:migrate",
-    "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
-    "db:migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
-    "db:seed:all": "npx sequelize-cli db:seed:all",
-    "db:seed:generate": "npx sequelize-cli seed:generate --name"
+    "db:migrate": "npx sequelize-cli db:migrate --config ./sequelize.config.js",
+    "db:migrate:undo": "npx sequelize-cli db:migrate:undo --config ./sequelize.config.js",
+    "db:migrate:undo:all": "npx sequelize-cli db:migrate:undo:all --config ./sequelize.config.js",
+    "db:seed:all": "npx sequelize-cli db:seed:all --config ./sequelize.config.js",
+    "db:seed:generate": "npx sequelize-cli seed:generate --name --config ./sequelize.config.js"
   },
   "keywords": [
     "express",
@@ -48,7 +48,9 @@
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "sequelize-cli": "^6.6.3",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -69,9 +71,7 @@
     "lint-staged": "^15.2.2",
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
-    "sequelize-cli": "^6.6.3",
     "ts-jest": "^29.1.0",
-    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   },

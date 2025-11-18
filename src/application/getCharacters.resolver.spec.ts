@@ -50,8 +50,8 @@ describe('CharacterResolver suite test 🧪', () => {
       set: jest.fn(),
     };
 
-    (RedisCacheService as jest.Mock).mockImplementation(() => ({
-      getInstance: jest.fn().mockReturnValue(mockCacheInstance),
+    (RedisCacheService.getSingletonInstance as jest.Mock).mockImplementation(() => ({
+      getCacheService: jest.fn().mockReturnValue(mockCacheInstance),
     }));
 
     mockCharacterRepository = {

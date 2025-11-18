@@ -1,8 +1,8 @@
 import { Location } from '../../models/Location.model';
 import { Character } from '../../models/Character.model';
 import { sequelize } from '../../db';
-import { CharacterGender, CharacterStatus } from '../../../../domain/constants/character.constant';
 import { Op } from 'sequelize';
+import { FilterArgs } from '../../../../domain/models/character.model';
 
 export class CharacterSequelizeRepository {
   async count(): Promise<number> {
@@ -12,15 +12,8 @@ export class CharacterSequelizeRepository {
   async paginate(
     page: number,
     limit: number,
-    filters?: {
-      id?: string;
-      name?: string;
-      status?: CharacterStatus;
-      species?: string;
-      gender?: CharacterGender;
-      origin?: string;
-    },
-  ) {
+    filters?: FilterArgs,
+  ): Promise<{ count: number; rows: Character[] }> {
     const whereCondition: any = {};
     let includeOrigin = false;
     const locationWhere: any = {};

@@ -10,17 +10,27 @@ export interface CacheService {
 }
 
 export class RedisCacheService {
+  private static serviceInstance: RedisCacheService;
   private instance!: CacheService;
+
+  private constructor() {}
+
+  public static getSingletonInstance(): RedisCacheService {
+    if (!RedisCacheService.serviceInstance) {
+      RedisCacheService.serviceInstance = new RedisCacheService();
+    }
+    return RedisCacheService.serviceInstance;
+  }
 
   /**
    * Initializes the cache service.
    * @param {Logger} logger - The logger instance.
-   * @returns {Promise<CacheService>} - The initialized cache service.
+   * @returns {Promise<void>}
    */
-  async initializeCacheService(logger: Logger): Promise<CacheService> {
+  async initialize(logger: Logger): Promise<void> {
     if (this.isInitialized()) {
       logger.warn('Cache service already initialized.');
-      return this.instance;
+      return;
     }
 
     const host = process.env.REDIS_HOST || 'localhost';
@@ -77,14 +87,16 @@ export class RedisCacheService {
       };
 
       this.instance = service;
-      return this.instance;
     } catch (error) {
       logger.error({ error }, '❌ Unable to connect to Redis.');
       throw error;
     }
   }
 
-  getInstance(): CacheService {
+  async getCacheService(logger: Logger): Promise<CacheService> {
+    if (!this.isInitialized()) {
+      await this.initialize(logger);
+    }
     return this.instance;
   }
 

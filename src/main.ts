@@ -17,7 +17,9 @@ import { swaggerSpec } from './infrastructure/docs/swagger.config';
 import cron from 'node-cron';
 import { syncCharacters } from './jobs/syncCharacters.cron';
 import { initializeDB } from './infrastructure/database/db';
-import { syncAndSeedDB } from './infrastructure/database/seeders/tsSeed';
+import { SyncAndSeedService } from './domain/services/syncAndSeed.service';
+import { CharacterSequelizeRepository } from './infrastructure/database/persistence/repositories/character.repository';
+import { CharacterAdapter } from './infrastructure/database/persistence/adapters/character.adapter';
 
 const app = express();
 
@@ -75,11 +77,15 @@ app.use(createErrorHandlerMiddleware);
 /* ERROR HANDLING */
 
 async function startServer() {
-  const cacheService = new RedisCacheService();
+  const cacheServiceSingleton = RedisCacheService.getSingletonInstance();
+  const syncAndSeedService = new SyncAndSeedService(
+    new CharacterSequelizeRepository(),
+    new CharacterAdapter(),
+  );
 
   try {
     try {
-      await cacheService.initializeCacheService(logger);
+      await cacheServiceSingleton.initialize(logger);
     } catch (e) {
       logger.warn({ msg: 'Failed to initialize cache service', error: e });
     }
@@ -87,7 +93,7 @@ async function startServer() {
     try {
       await initializeDB(logger);
 
-      await syncAndSeedDB(logger);
+      await syncAndSeedService.run(logger);
     } catch (e) {
       logger.error({ msg: 'Failed to initialize database, shutting down.', error: e });
       process.exit(1);

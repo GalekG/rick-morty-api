@@ -1,18 +1,9 @@
-import { CharacterGender, CharacterStatus } from '../domain/constants/character.constant';
 import { Character } from '../infrastructure/database/models/Character.model';
 import { CharacterSequelizeRepository } from '../infrastructure/database/persistence/repositories/character.repository';
 import { TimeSpent } from '../infrastructure/decorators/timeSpent.decorator';
 import { CharacterAdapter } from '../infrastructure/database/persistence/adapters/character.adapter';
 import { RedisCacheService } from '../infrastructure/cache/client.redis';
-
-interface FilterArgs {
-  id?: string;
-  name?: string;
-  status?: CharacterStatus;
-  species?: string;
-  gender?: CharacterGender;
-  origin?: string;
-}
+import { FilterArgs } from '../domain/models/character.model';
 
 interface CharacterResolverArgs extends Record<string, string | number | object | undefined> {
   page?: number;
@@ -24,17 +15,16 @@ class CharacterResolver {
   public async run(_: any, args: CharacterResolverArgs, context: any) {
     const persistence = new CharacterSequelizeRepository();
     const adapter = new CharacterAdapter();
-    const cacheService = new RedisCacheService();
+    const cacheServiceSingleton = RedisCacheService.getSingletonInstance();
 
     const { page, filters } = args;
     const pageNum = page || 1;
-
-    const cacheInstance = cacheService.getInstance();
 
     const filterString = JSON.stringify(filters || {});
     const cacheKey = `gql:characters:p${pageNum}:${filterString}`.toLowerCase();
 
     try {
+      const cacheInstance = await cacheServiceSingleton.getCacheService(context.req.log);
       const cachedData = await cacheInstance.get(cacheKey);
 
       if (cachedData) {
@@ -67,20 +57,22 @@ class CharacterResolver {
 
         await persistence.insertCharactersTransaction(items);
 
-        result.items = items.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          status: c.status,
-          species: c.species,
-          type: c.type,
-          gender: c.gender,
-          image: c.image,
-          originLocationId: c.origin?.id,
-          currentLocationId: c.location?.id,
-          origin: c.origin,
-          currentLocation: c.location,
-          created: c.created,
-        }));
+        result.items = items.map((c) => {
+          return {
+            id: c.id,
+            name: c.name,
+            status: c.status,
+            species: c.species,
+            type: c.type,
+            gender: c.gender,
+            image: c.image,
+            originLocationId: c.origin?.id,
+            currentLocationId: c.location?.id,
+            origin: c.origin,
+            currentLocation: c.location,
+            created: c.created,
+          } as unknown as Character;
+        });
         result.total = total ?? 0;
 
         isApiSource = true;
@@ -104,6 +96,7 @@ class CharacterResolver {
 
       return result;
     } catch (error: any) {
+      console.error(error);
       context.req.log.error({
         msg: 'Error getting characters from local GraphQL resolver (DB)',
         error: error.message,

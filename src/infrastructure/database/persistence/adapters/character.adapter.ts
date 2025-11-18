@@ -1,21 +1,25 @@
 import axios from 'axios';
-import { CharacterGender, CharacterStatus } from '../../../../domain/constants/character.constant';
-
-interface FilterArgs {
-  name?: string;
-  status?: CharacterStatus;
-  species?: string;
-  gender?: CharacterGender;
-}
+import { CharacterModel, FilterArgs } from '../../../../domain/models/character.model';
 
 export class CharacterAdapter {
   private baseUrl = process.env.RICK_MORTY_API_URL;
 
-  async fetchCharacters(page: number, filters?: FilterArgs) {
-    const query = this.buildFectchCharactersQuery(
-      page,
-      filters as Record<string, string | number | undefined>,
-    );
+  /**
+   * Fetches characters from the Rick and Morty API.
+   *
+   * @param {number} page - The page number of the results.
+   * @param {FilterArgs} [filters] - Optional filters for the characters.
+   * @returns {Promise<{ total: number, page: number, items: Array<CharacterModel> }>} - The total number of characters, the page number, and an array of character objects.
+   */
+  async fetchCharacters(
+    page: number,
+    filters?: FilterArgs,
+  ): Promise<{
+    total: number;
+    page: number;
+    items: Array<CharacterModel>;
+  }> {
+    const query = this.buildFectchCharactersQuery(page, filters);
 
     const response = await axios.post(
       this.baseUrl as string,
@@ -46,7 +50,11 @@ export class CharacterAdapter {
     };
   }
 
-  async fetchCharactersByIds(ids: number | string[]) {
+  async fetchCharactersByIds(ids: (number | string)[]): Promise<{
+    items: Array<CharacterModel>;
+    errors?: string[];
+  }> {
+    if (!ids.length) return { items: [], errors: undefined };
     const query = this.buildFectchCharactersQueryByIds(ids);
 
     const response = await axios.post(
@@ -74,10 +82,7 @@ export class CharacterAdapter {
     return { items, errors: response.data.errors };
   }
 
-  private buildFectchCharactersQuery(
-    page: number,
-    filter?: Record<string, string | number | undefined>,
-  ): string {
+  private buildFectchCharactersQuery(page: number, filter?: FilterArgs): string {
     let filterString = '';
     if (filter) {
       const filterEntries = Object.entries(filter).filter(([, value]) => value !== undefined);
@@ -96,8 +101,8 @@ export class CharacterAdapter {
       }`;
   }
 
-  private buildFectchCharactersQueryByIds(ids: number | string[]): string {
-    const idsString = Array.isArray(ids) ? ids.join(', ') : ids.toString();
+  private buildFectchCharactersQueryByIds(ids: (number | string)[]): string {
+    const idsString = ids.reduce((acc, id) => [...acc, `${id}`], [] as string[]).join(',');
     return `query GetCharactersByIds { charactersByIds(ids: [${idsString}]) { ${this.buildBaseCharacterQuery()} } }`;
   }
 
